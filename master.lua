@@ -576,7 +576,7 @@ local function buildTeleportUI()
     ------------------------------------------
     local TeleportPadButton = Instance.new("TextButton")
     TeleportPadButton.Name = "TeleportPadButton"
-    TeleportPadButton.Size = UDim2.new(0, 200, 0, 50)
+    TeleportPadButton.Size = UDim2.new(0, 150, 0, 30)
     TeleportPadButton.Position = UDim2.new(0.5, -100, 0.75, -25) -- Placed slightly higher up
     TeleportPadButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     TeleportPadButton.Text = "TP TO PAD"
@@ -599,7 +599,7 @@ local function buildTeleportUI()
     ------------------------------------------
     local RegenButton = Instance.new("TextButton")
     RegenButton.Name = "RegenButton"
-    RegenButton.Size = UDim2.new(0, 200, 0, 50) -- Identical size
+    RegenButton.Size = UDim2.new(0, 150, 0, 30) -- Identical size
     RegenButton.Position = UDim2.new(0.5, -100, 0.75, 35) -- Centered on X axis, shifted directly down on Y axis
     RegenButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     RegenButton.Text = "TP TO REGEN"
