@@ -654,45 +654,38 @@ local function buildTeleportUI()
     end)
 
     -- Regen Button Click Event
-    -- Regen Button Click Event (Automated ClickDetector touch + Instant Position Snap-back)
-RegenButton.MouseButton1Click:Connect(function()
-    local char = LocalPlayer.Character 
-    local rootPart = char and char:FindFirstChild("HumanoidRootPart")
-    
-    if rootPart then
-        local regenPart = locateRegenButton()
-        if regenPart then
-            local originalCFrame = rootPart.CFrame
-            RegenButton.Text = "REGENERATING..." 
-            RegenGradient.Enabled = false 
-            RegenButton.BackgroundColor3 = Color3.fromRGB(30, 35, 45) 
-            RegenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-            
-            rootPart.CFrame = regenPart.CFrame * CFrame.new(0, 2.5, 0)
-            task.wait(0.05)
-            
-            local detector = regenPart:FindFirstChildOfClass("ClickDetector") or (regenPart.Parent and regenPart.Parent:FindFirstChildOfClass("ClickDetector"))
-            if fireclickdetector and detector then
-                fireclickdetector(detector, 0)
-            elseif fireclickdetector then
-                local fallbackDetector = workspace:FindFirstChild("Admin") and workspace.Admin:FindFirstChild("Regen") and workspace.Admin.Regen:FindFirstChildOfClass("ClickDetector")
-                if fallbackDetector then fireclickdetector(fallbackDetector, 0) end
+    RegenButton.MouseButton1Click:Connect(function()
+        local char = LocalPlayer.Character
+        local rootPart = char and char:FindFirstChild("HumanoidRootPart")
+        
+        if rootPart then
+            local regenPart = locateRegenButton()
+            if regenPart then
+                RegenButton.Text = "REGENERATING..."
+                RegenGradient.Enabled = false
+                RegenButton.BackgroundColor3 = Color3.fromRGB(30, 35, 45)
+                RegenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    
+                 -- Continuously teleports you to the Regen brick to force a clean server touch
+                local startTime = os.clock()
+                while os.clock() - startTime < 0.5 do
+                    if not regenPart or not rootPart.Parent then break end
+                    rootPart.CFrame = regenPart.CFrame * CFrame.new(0, 2.5, 0)
+                    task.wait()
+                end
+                
+                RegenButton.Text = "TP TO REGEN"
+                RegenButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                RegenButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+                RegenGradient.Enabled = true
+            else
+                RegenButton.Text = "REGEN NOT FOUND"
+                task.wait(1.5)
+                RegenButton.Text = "TP TO REGEN"
             end
-            task.wait(0.1)
-            
-            rootPart.CFrame = originalCFrame
-            RegenButton.Text = "TP TO REGEN" 
-            RegenButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255) 
-            RegenButton.TextColor3 = Color3.fromRGB(0, 0, 0) 
-            RegenGradient.Enabled = true
-        else
-            RegenButton.Text = "REGEN NOT FOUND" 
-            task.wait(1.5) 
-            RegenButton.Text = "TP TO REGEN"
         end
-    end
-end)
-
+    end)
+end
 
 -- Instantly attempts to spawn the dual buttons upon entry
 buildTeleportUI()
