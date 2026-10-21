@@ -510,35 +510,33 @@ end
 
 -- Custom Kohl's Admin House Pad Searcher
 local function locateAdminPad()
-    -- FIX FOR JOINING: Waits up to 5 seconds for the main Admin folder to stream into the map
-    local adminFolder = workspace:WaitForChild("Admin", 5)
-    
+    -- 1. Try standard Kohl's folder path setup
+    local adminFolder = workspace:FindFirstChild("Admin")
     if adminFolder then
-        local pads = adminFolder:WaitForChild("Pads", 2)
+        local pads = adminFolder:FindFirstChild("Pads")
         if pads then
-            -- Find the first available pad group in the folder
             for _, padModel in ipairs(pads:GetChildren()) do
-                -- Kohl's pads contain a part called "Head" that detects your touch
                 local head = padModel:FindFirstChild("Head")
-                if head then
-                    return head
-                end
+                if head then return head end
             end
         end
     end
     
-    -- Emergency fallback just in case the folder structure changes slightly
+    -- 2. FIRST-JOIN FALLBACK: If the Pads folder hasn't loaded yet, scan the whole map!
     for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj.Name == "Touch to get admin" and obj:IsA("BasePart") then
-            return obj
-        elseif obj.Name == "Head" and obj.Parent and obj.Parent.Name == "Touch to get admin" then
-            return obj
+        if obj:IsA("BasePart") then
+            local name = obj.Name:lower()
+            -- This looks for the exact name or "head" parts inside a model named "touch to get admin"
+            if name == "touch to get admin" then
+                return obj
+            elseif obj.Name == "Head" and obj.Parent and obj.Parent.Name == "Touch to get admin" then
+                return obj
+            end
         end
     end
 
     return nil
 end
-
 
 -- Custom Kohl's Regen Button Searcher
 local function locateRegenButton()
