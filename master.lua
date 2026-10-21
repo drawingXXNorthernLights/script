@@ -385,125 +385,6 @@ while not PlayerGui do
     PlayerGui = LocalPlayer:FindFirstChild("PlayerGui")
 end
 
--- Custom Kohl's Admin House Pad Searcher
-local function locateAdminPad()
-    local adminFolder = workspace:FindFirstChild("Admin")
-    if adminFolder then
-        local pads = adminFolder:FindFirstChild("Pads")
-        if pads then
-            for _, padModel in ipairs(pads:GetChildren()) do
-                local head = padModel:FindFirstChild("Head")
-                if head then
-                    return head
-                end
-            end
-        end
-    end
-    
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj.Name == "Touch to get admin" and obj:IsA("BasePart") then
-            return obj
-        elseif obj.Name == "Head" and obj.Parent and obj.Parent.Name == "Touch to get admin" then
-            return obj
-        end
-    end
-    return nil
-end
-
--- Function to safely spawn and build the button
-local function buildTeleportUI()
-    -- 1. CREATE OR RE-ESTABLISH THE SCREEN GUI
-    local ScreenGui = PlayerGui:FindFirstChild("AdminTeleportGui")
-    if not ScreenGui then
-        ScreenGui = Instance.new("ScreenGui")
-        ScreenGui.Name = "AdminTeleportGui"
-        ScreenGui.ResetOnSpawn = false -- Protects it from breaking when character resets
-        ScreenGui.Parent = PlayerGui
-    else
-        -- Wipe any overlapping buttons if it duplicated
-        local oldButton = ScreenGui:FindFirstChild("TeleportPadButton")
-        if oldButton then oldButton:Destroy() end
-    end
-
-    -- 2. CREATE THE TEXT BUTTON
-    local TeleportPadButton = Instance.new("TextButton")
-    TeleportPadButton.Name = "TeleportPadButton"
-    TeleportPadButton.Size = UDim2.new(0, 200, 0, 50)
-    TeleportPadButton.Position = UDim2.new(0.5, -100, 0.8, -25) -- Centers it near bottom
-    TeleportPadButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    TeleportPadButton.Text = "TP TO PAD"
-    TeleportPadButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-    TeleportPadButton.Font = Enum.Font.SourceSansBold
-    TeleportPadButton.TextSize = 18
-    TeleportPadButton.BorderSizePixel = 0
-    TeleportPadButton.Parent = ScreenGui
-
-    -- 3. CREATE THE GRADIENT EFFECT
-    local TPGradient = Instance.new("UIGradient")
-    TPGradient.Name = "TPGradient"
-    TPGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 100, 100)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 100, 255))
-    })
-    TPGradient.Parent = TeleportPadButton
-
-    -- 4. BUTTON CLICK EVENT LOGIC
-    TeleportPadButton.MouseButton1Click:Connect(function()
-        local char = LocalPlayer.Character
-        local rootPart = char and char:FindFirstChild("HumanoidRootPart")
-        
-        if rootPart then
-            local pad = locateAdminPad()
-            if pad then
-                TeleportPadButton.Text = "TELEPORTING..."
-                TPGradient.Enabled = false
-                TeleportPadButton.BackgroundColor3 = Color3.fromRGB(30, 35, 45)
-                TeleportPadButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-                
-                -- Fast touch simulation to override blockers
-                local startTime = os.clock()
-                while os.clock() - startTime < 0.5 do
-                    if not pad or not rootPart.Parent then break end
-                    rootPart.CFrame = pad.CFrame * CFrame.new(0, 2.5, 0)
-                    task.wait()
-                end
-                
-                TeleportPadButton.Text = "TP TO PAD"
-                TeleportPadButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                TeleportPadButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-                TPGradient.Enabled = true
-            else
-                TeleportPadButton.Text = "PAD NOT FOUND"
-                task.wait(1.5)
-                TeleportPadButton.Text = "TP TO PAD"
-            end
-        end
-    end)
-end
-
--- Instantly attempts to spawn it upon entering the server
-buildTeleportUI()
-
--- Double-down listener to patch loading gaps if character initializes late
-LocalPlayer.CharacterAdded:Connect(function()
-    task.wait(0.3)
-    buildTeleportUI()
-end)
-
--- Services
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-
--- Variables
-local LocalPlayer = Players.LocalPlayer
-
--- FIX FOR JOINING GAME: Forces the script to wait until PlayerGui completely loads
-local PlayerGui = LocalPlayer:FindFirstChild("PlayerGui")
-while not PlayerGui do
-    task.wait(0.1)
-    PlayerGui = LocalPlayer:FindFirstChild("PlayerGui")
-end
-
 -- ==========================================
 -- 1. SEARCH LOGIC FUNCTIONS
 -- ==========================================
@@ -634,11 +515,18 @@ local function buildTeleportUI()
                 TeleportPadButton.BackgroundColor3 = Color3.fromRGB(30, 35, 45)
                 TeleportPadButton.TextColor3 = Color3.fromRGB(255, 255, 255)
                 
-                local startTime = os.clock()
-                while os.clock() - startTime < 0.5 do
-                    if not pad or not rootPart.Parent then break end
-                    rootPart.CFrame = pad.CFrame * CFrame.new(0, 2.5, 0)
+                -- Fire touch interest if environment allows, else use manual alignment
+                if firetouchinterest then
+                    firetouchinterest(rootPart, pad, 0)
                     task.wait()
+                    firetouchinterest(rootPart, pad, 1)
+                else
+                    local startTime = os.clock()
+                    while os.clock() - startTime < 0.5 do
+                        if not pad or not rootPart.Parent then break end
+                        rootPart.CFrame = pad.CFrame * CFrame.new(0, 2.5, 0)
+                        task.wait()
+                    end
                 end
                 
                 TeleportPadButton.Text = "TP TO PAD"
@@ -666,11 +554,19 @@ local function buildTeleportUI()
                 RegenButton.BackgroundColor3 = Color3.fromRGB(30, 35, 45)
                 RegenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
                 
-                local startTime = os.clock()
-                while os.clock() - startTime < 0.5 do
-                    if not regenPart or not rootPart.Parent then break end
-                    rootPart.CFrame = regenPart.CFrame * CFrame.new(0, 2.5, 0)
-                    task.wait()
+                -- Force-trigger the touch event directly on the pad part
+                if firetouchinterest then
+                    firetouchinterest(rootPart, regenPart, 0) -- Starts contact
+                    task.wait(0.05)
+                    firetouchinterest(rootPart, regenPart, 1) -- Ends contact
+                else
+                    -- Fallback loop if environment lacks firetouchinterest
+                    local startTime = os.clock()
+                    while os.clock() - startTime < 0.5 do
+                        if not regenPart or not rootPart.Parent then break end
+                        rootPart.CFrame = regenPart.CFrame * CFrame.new(0, 2.5, 0)
+                        task.wait()
+                    end
                 end
                 
                 RegenButton.Text = "TP TO REGEN"
