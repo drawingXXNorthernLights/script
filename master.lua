@@ -508,58 +508,49 @@ end
 -- 1. SEARCH LOGIC FUNCTIONS
 -- ==========================================
 
--- Custom Kohl's Admin House Pad Searcher
-local function locateAdminPad()
-    -- 1. Try standard Kohl's folder path setup
+-- ==========================================
+-- 1. UNIVERSAL SEARCH ENGINE (FIRST-JOIN FIX)
+-- ==========================================
+local function locateTarget(targetType)
+    -- 1. Try checking the official Kohl's folder path first
     local adminFolder = workspace:FindFirstChild("Admin")
     if adminFolder then
-        local pads = adminFolder:FindFirstChild("Pads")
-        if pads then
-            for _, padModel in ipairs(pads:GetChildren()) do
-                local head = padModel:FindFirstChild("Head")
-                if head then return head end
+        if targetType == "Pad" then
+            local pads = adminFolder:FindFirstChild("Pads")
+            if pads then
+                for _, padModel in ipairs(pads:GetChildren()) do
+                    local head = padModel:FindFirstChild("Head")
+                    if head then return head end
+                end
+            end
+        elseif targetType == "Regen" then
+            local regenModel = adminFolder:FindFirstChild("Regen")
+            if regenModel then
+                return regenModel:FindFirstChild("Regen") or regenModel:FindFirstChild("Head") or regenModel:FindFirstChildOfClass("BasePart")
             end
         end
     end
     
-    -- 2. FIRST-JOIN FALLBACK: If the Pads folder hasn't loaded yet, scan the whole map!
+    -- 2. UNIVERSAL FALLBACK: Scans the entire map (Works instantly on first join)
     for _, obj in ipairs(workspace:GetDescendants()) do
         if obj:IsA("BasePart") then
             local name = obj.Name:lower()
-            -- This looks for the exact name or "head" parts inside a model named "touch to get admin"
-            if name == "touch to get admin" then
-                return obj
-            elseif obj.Name == "Head" and obj.Parent and obj.Parent.Name == "Touch to get admin" then
-                return obj
-            end
-        end
-    end
-
-    return nil
-end
-
--- Custom Kohl's Regen Button Searcher
-local function locateRegenButton()
-    -- 1. Standard Kohl's Admin House setup path
-    local adminFolder = workspace:FindFirstChild("Admin")
-    if adminFolder then
-        local regenModel = adminFolder:FindFirstChild("Regen")
-        if regenModel then
-            return regenModel:FindFirstChild("Regen") or regenModel:FindFirstChild("Head") or regenModel:FindFirstChildOfClass("BasePart")
-        end
-    end
-
-    -- 2. Universal fallback scanner for any part named "Regen"
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") then
-            local name = obj.Name:lower()
-            if name == "regen" or name == "respawn" or name == "reset house" then
-                return obj
+            if targetType == "Pad" then
+                if name == "touch to get admin" then
+                    return obj
+                elseif obj.Name == "Head" and obj.Parent and obj.Parent.Name == "Touch to get admin" then
+                    return obj
+                end
+            elseif targetType == "Regen" then
+                if name == "regen" or name == "respawn" or name == "reset house" then
+                    return obj
+                end
             end
         end
     end
     return nil
 end
+
 
 -- ==========================================
 -- 2. UI BUILDER FUNCTION
