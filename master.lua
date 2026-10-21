@@ -557,15 +557,10 @@ end
 -- ==========================================
 -- 2. UI BUILDER FUNCTION
 -- ==========================================
-local function buildTeleportUI()
-    -- Create or re-establish the ScreenGui container
-    local ScreenGui = PlayerGui:FindFirstChild("AdminTeleportGui")
-    if not ScreenGui then
-        ScreenGui = Instance.new("ScreenGui")
-        ScreenGui.Name = "AdminTeleportGui"
-        ScreenGui.ResetOnSpawn = true -- Keeps UI alive when you reset/die
-        ScreenGui.Parent = PlayerGui
-    end
+local function buildThePanel()
+    -- Clean wipe old GUIs to prevent overlap bugs
+    local oldGui = PlayerGui:FindFirstChild("LegacyMassiveDestroyerGui")
+    if oldGui then oldGui:Destroy() end
 
     ------------------------------------------
     -- BUTTON 1: TELEPORT TO ADMIN PAD
