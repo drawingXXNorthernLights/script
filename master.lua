@@ -661,30 +661,42 @@ local function buildTeleportUI()
         if rootPart then
             local regenPart = locateRegenButton()
             if regenPart then
-                RegenButton.Text = "REGENERATING..."
-                RegenGradient.Enabled = false
-                RegenButton.BackgroundColor3 = Color3.fromRGB(30, 35, 45)
-                RegenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-                
-                local startTime = os.clock()
-                while os.clock() - startTime < 0.5 do
-                    if not regenPart or not rootPart.Parent then break end
-                    rootPart.CFrame = regenPart.CFrame * CFrame.new(0, 2.5, 0)
-                    task.wait()
-                end
-                
-                RegenButton.Text = "TP TO REGEN"
-                RegenButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                RegenButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-                RegenGradient.Enabled = true
-            else
-                RegenButton.Text = "REGEN NOT FOUND"
-                task.wait(1.5)
-                RegenButton.Text = "TP TO REGEN"
+                -- 1. SAVE YOUR STARTING SPOT
+            local originalCFrame = rootPart.CFrame 
+            
+            RegenButton.Text = "REGENERATING..." 
+            RegenGradient.Enabled = false 
+            RegenButton.BackgroundColor3 = Color3.fromRGB(30, 35, 45) 
+            RegenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            
+            -- 2. TELEPORT TO THE PAD
+            rootPart.CFrame = regenPart.CFrame * CFrame.new(0, 2.5, 0)
+            task.wait(0.05) -- Tiny delay to let the physics engine register your position
+            
+            -- 3. AUTOMATICALLY FORCE THE CLICK / TOUCH INTEREST
+            if firetouchinterest then
+                -- Simulates your foot hitting the pad, then immediately letting go
+                firetouchinterest(rootPart, regenPart, 0) -- 0 registers the touch start
+                task.wait()
+                firetouchinterest(rootPart, regenPart, 1) -- 1 registers the touch end
             end
+            
+            task.wait(0.1) -- Small breathing room to ensure the game server accepts the reset
+            
+            -- 4. INSTANTLY SNAP RIGHT BACK TO WHERE YOU WERE STANDING
+            rootPart.CFrame = originalCFrame 
+            
+            RegenButton.Text = "TP TO REGEN" 
+            RegenButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255) 
+            RegenButton.TextColor3 = Color3.fromRGB(0, 0, 0) 
+            RegenGradient.Enabled = true
+        else
+            RegenButton.Text = "REGEN NOT FOUND" 
+            task.wait(1.5) 
+            RegenButton.Text = "TP TO REGEN"
         end
-    end)
-end
+    end
+end)
 
 -- Instantly attempts to spawn the dual buttons upon entry
 buildTeleportUI()
