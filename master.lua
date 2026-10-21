@@ -391,7 +391,10 @@ end
 
 -- Custom Kohl's Admin House Pad Searcher
 local function locateAdminPad()
-    local adminFolder = workspace:FindFirstChild("Admin")
+    -- Common paths for diverse KAH map configurations
+    local terrainGame = workspace:FindFirstChild("Terrain") and workspace.Terrain:FindFirstChild("_Game")
+    local adminFolder = (terrainGame and terrainGame:FindFirstChild("Admin")) or workspace:FindFirstChild("Admin")
+    
     if adminFolder then
         local pads = adminFolder:FindFirstChild("Pads")
         if pads then
@@ -414,22 +417,23 @@ end
 
 -- Custom Kohl's Regen Button Searcher
 local function locateRegenButton()
-    -- 1. Standard Kohl's Admin House setup path
-    local adminFolder = workspace:FindFirstChild("Admin")
+    -- 1. Scan default map layout hierarchies
+    local terrainGame = workspace:FindFirstChild("Terrain") and workspace.Terrain:FindFirstChild("_Game")
+    local adminFolder = (terrainGame and terrainGame:FindFirstChild("Admin")) or workspace:FindFirstChild("Admin")
+    
     if adminFolder then
         local regenModel = adminFolder:FindFirstChild("Regen")
         if regenModel then
-            return regenModel:FindFirstChild("Regen") or regenModel:FindFirstChild("Head") or regenModel:FindFirstChildOfClass("BasePart")
+            return regenModel
         end
     end
 
-    -- 2. Universal fallback scanner for any part named "Regen"
+    -- 2. Scan explicitly for the base parts or container
     for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") then
-            local name = obj.Name:lower()
-            if name == "regen" or name == "respawn" or name == "reset house" then
-                return obj
-            end
+        if obj:IsA("Model") and (obj.Name:lower() == "regen" or obj.Name == "Reset admin panels") then
+            return obj
+        elseif obj:IsA("BasePart") and obj.Name:lower() == "regen" then
+            return obj.Parent:IsA("Model") and obj.Parent or obj
         end
     end
     return nil
@@ -444,10 +448,9 @@ local function buildTeleportUI()
     if not ScreenGui then
         ScreenGui = Instance.new("ScreenGui")
         ScreenGui.Name = "AdminTeleportGui"
-        ScreenGui.ResetOnSpawn = false -- Keeps UI alive when you reset/die
+        ScreenGui.ResetOnSpawn = false 
         ScreenGui.Parent = PlayerGui
     else
-        -- Wipe old instances if they duplicate
         if ScreenGui:FindFirstChild("TeleportPadButton") then ScreenGui.TeleportPadButton:Destroy() end
         if ScreenGui:FindFirstChild("RegenButton") then ScreenGui.RegenButton:Destroy() end
     end
@@ -458,7 +461,7 @@ local function buildTeleportUI()
     local TeleportPadButton = Instance.new("TextButton")
     TeleportPadButton.Name = "TeleportPadButton"
     TeleportPadButton.Size = UDim2.new(0, 200, 0, 50)
-    TeleportPadButton.Position = UDim2.new(0.5, -100, 0.75, -25) -- Placed slightly higher up
+    TeleportPadButton.Position = UDim2.new(0.5, -100, 0.75, -25) 
     TeleportPadButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     TeleportPadButton.Text = "TP TO PAD"
     TeleportPadButton.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -476,12 +479,12 @@ local function buildTeleportUI()
     TPGradient.Parent = TeleportPadButton
 
     ------------------------------------------
-    -- BUTTON 2: TELEPORT TO REGEN (STACKED UNDERNEATH)
+    -- BUTTON 2: TELEPORT TO REGEN
     ------------------------------------------
     local RegenButton = Instance.new("TextButton")
     RegenButton.Name = "RegenButton"
-    RegenButton.Size = UDim2.new(0, 200, 0, 50) -- Identical size
-    RegenButton.Position = UDim2.new(0.5, -100, 0.75, 35) -- Centered on X axis, shifted directly down on Y axis
+    RegenButton.Size = UDim2.new(0, 200, 0, 50) 
+    RegenButton.Position = UDim2.new(0.5, -100, 0.75, 35) 
     RegenButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     RegenButton.Text = "TP TO REGEN"
     RegenButton.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -493,7 +496,7 @@ local function buildTeleportUI()
     local RegenGradient = Instance.new("UIGradient")
     RegenGradient.Name = "RegenGradient"
     RegenGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 255, 100)), -- Distinct green/blue tint
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 255, 100)),
         ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 200, 255))
     })
     RegenGradient.Parent = RegenButton
@@ -502,7 +505,7 @@ local function buildTeleportUI()
     -- 3. CLICK EVENT LOGIC
     -- ==========================================
 
-    -- Admin Pad Click Event
+    -- Admin Pad Touch Event
     TeleportPadButton.MouseButton1Click:Connect(function()
         local char = LocalPlayer.Character
         local rootPart = char and char:FindFirstChild("HumanoidRootPart")
@@ -515,7 +518,6 @@ local function buildTeleportUI()
                 TeleportPadButton.BackgroundColor3 = Color3.fromRGB(30, 35, 45)
                 TeleportPadButton.TextColor3 = Color3.fromRGB(255, 255, 255)
                 
-                -- Fire touch interest if environment allows, else use manual alignment
                 if firetouchinterest then
                     firetouchinterest(rootPart, pad, 0)
                     task.wait()
@@ -541,34 +543,37 @@ local function buildTeleportUI()
         end
     end)
 
-    -- Regen Button Click Event
+    -- Regen ClickDetector Event
     RegenButton.MouseButton1Click:Connect(function()
         local char = LocalPlayer.Character
         local rootPart = char and char:FindFirstChild("HumanoidRootPart")
         
         if rootPart then
-            local regenPart = locateRegenButton()
-            if regenPart then
+            local regenParent = locateRegenButton()
+            if regenParent then
                 RegenButton.Text = "REGENERATING..."
                 RegenGradient.Enabled = false
                 RegenButton.BackgroundColor3 = Color3.fromRGB(30, 35, 45)
                 RegenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
                 
-                -- Force-trigger the touch event directly on the pad part
-                if firetouchinterest then
-                    firetouchinterest(rootPart, regenPart, 0) -- Starts contact
-                    task.wait(0.05)
-                    firetouchinterest(rootPart, regenPart, 1) -- Ends contact
-                else
-                    -- Fallback loop if environment lacks firetouchinterest
-                    local startTime = os.clock()
-                    while os.clock() - startTime < 0.5 do
-                        if not regenPart or not rootPart.Parent then break end
-                        rootPart.CFrame = regenPart.CFrame * CFrame.new(0, 2.5, 0)
-                        task.wait()
-                    end
+                -- Instantly grab character alignment targets
+                local targetPart = regenParent:FindFirstChild("Head") or regenParent:FindFirstChildOfClass("BasePart")
+                if targetPart then
+                    rootPart.CFrame = targetPart.CFrame * CFrame.new(0, 3, 0)
                 end
                 
+                -- Find and trigger the engine-level ClickDetector
+                local detector = regenParent:FindFirstChildOfClass("ClickDetector") or regenParent:FindFirstChild("ClickDetector", true)
+                
+                if detector and fireclickdetector then
+                    task.wait(0.05) -- Tiny safety delay for loading frame shifts
+                    fireclickdetector(detector)
+                else
+                    -- Fallback message if tool lacks click detection bindings
+                    warn("ClickDetector or fireclickdetector function was not found!")
+                end
+                
+                task.wait(0.2)
                 RegenButton.Text = "TP TO REGEN"
                 RegenButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                 RegenButton.TextColor3 = Color3.fromRGB(0, 0, 0)
