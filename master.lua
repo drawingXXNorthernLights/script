@@ -558,4 +558,139 @@ end
 -- 2. UI BUILDER FUNCTION
 -- ==========================================
 local function buildTeleportUI()
-    -- Create or re-establish the ScreenGui contain
+    -- Create or re-establish the ScreenGui container
+    local ScreenGui = PlayerGui:FindFirstChild("AdminTeleportGui")
+    if not ScreenGui then
+        ScreenGui = Instance.new("ScreenGui")
+        ScreenGui.Name = "AdminTeleportGui"
+        ScreenGui.ResetOnSpawn = false -- Keeps UI alive when you reset/die
+        ScreenGui.Parent = PlayerGui
+    else
+        -- Wipe old instances if they duplicate
+        if ScreenGui:FindFirstChild("TeleportPadButton") then ScreenGui.TeleportPadButton:Destroy() end
+        if ScreenGui:FindFirstChild("RegenButton") then ScreenGui.RegenButton:Destroy() end
+    end
+
+    ------------------------------------------
+    -- BUTTON 1: TELEPORT TO ADMIN PAD
+    ------------------------------------------
+    local TeleportPadButton = Instance.new("TextButton")
+    TeleportPadButton.Name = "TeleportPadButton"
+    TeleportPadButton.Size = UDim2.new(0, 200, 0, 50)
+    TeleportPadButton.Position = UDim2.new(0.5, -100, 0.75, -25) -- Placed slightly higher up
+    TeleportPadButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    TeleportPadButton.Text = "TP TO PAD"
+    TeleportPadButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+    TeleportPadButton.Font = Enum.Font.SourceSansBold
+    TeleportPadButton.TextSize = 16
+    TeleportPadButton.BorderSizePixel = 0
+    TeleportPadButton.Parent = ScreenGui
+
+    local TPGradient = Instance.new("UIGradient")
+    TPGradient.Name = "TPGradient"
+    TPGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 100, 100)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 100, 255))
+    })
+    TPGradient.Parent = TeleportPadButton
+
+    ------------------------------------------
+    -- BUTTON 2: TELEPORT TO REGEN (STACKED UNDERNEATH)
+    ------------------------------------------
+    local RegenButton = Instance.new("TextButton")
+    RegenButton.Name = "RegenButton"
+    RegenButton.Size = UDim2.new(0, 200, 0, 50) -- Identical size
+    RegenButton.Position = UDim2.new(0.5, -100, 0.75, 35) -- Centered on X axis, shifted directly down on Y axis
+    RegenButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    RegenButton.Text = "TP TO REGEN"
+    RegenButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+    RegenButton.Font = Enum.Font.SourceSansBold
+    RegenButton.TextSize = 16
+    RegenButton.BorderSizePixel = 0
+    RegenButton.Parent = ScreenGui
+
+    local RegenGradient = Instance.new("UIGradient")
+    RegenGradient.Name = "RegenGradient"
+    RegenGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 255, 100)), -- Distinct green/blue tint
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 200, 255))
+    })
+    RegenGradient.Parent = RegenButton
+
+    -- ==========================================
+    -- 3. CLICK EVENT LOGIC
+    -- ==========================================
+
+    -- Admin Pad Click Event
+    TeleportPadButton.MouseButton1Click:Connect(function()
+        local char = LocalPlayer.Character
+        local rootPart = char and char:FindFirstChild("HumanoidRootPart")
+        
+        if rootPart then
+            local pad = locateAdminPad()
+            if pad then
+                TeleportPadButton.Text = "TELEPORTING..."
+                TPGradient.Enabled = false
+                TeleportPadButton.BackgroundColor3 = Color3.fromRGB(30, 35, 45)
+                TeleportPadButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+                
+                local startTime = os.clock()
+                while os.clock() - startTime < 0.5 do
+                    if not pad or not rootPart.Parent then break end
+                    rootPart.CFrame = pad.CFrame * CFrame.new(0, 2.5, 0)
+                    task.wait()
+                end
+                
+                TeleportPadButton.Text = "TP TO PAD"
+                TeleportPadButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                TeleportPadButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+                TPGradient.Enabled = true
+            else
+                TeleportPadButton.Text = "PAD NOT FOUND"
+                task.wait(1.5)
+                TeleportPadButton.Text = "TP TO PAD"
+            end
+        end
+    end)
+
+    -- Regen Button Click Event
+    RegenButton.MouseButton1Click:Connect(function()
+        local char = LocalPlayer.Character
+        local rootPart = char and char:FindFirstChild("HumanoidRootPart")
+        
+        if rootPart then
+            local regenPart = locateRegenButton()
+            if regenPart then
+                RegenButton.Text = "REGENERATING..."
+                RegenGradient.Enabled = false
+                RegenButton.BackgroundColor3 = Color3.fromRGB(30, 35, 45)
+                RegenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+                
+                local startTime = os.clock()
+                while os.clock() - startTime < 0.5 do
+                    if not regenPart or not rootPart.Parent then break end
+                    rootPart.CFrame = regenPart.CFrame * CFrame.new(0, 2.5, 0)
+                    task.wait()
+                end
+                
+                RegenButton.Text = "TP TO REGEN"
+                RegenButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                RegenButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+                RegenGradient.Enabled = true
+            else
+                RegenButton.Text = "REGEN NOT FOUND"
+                task.wait(1.5)
+                RegenButton.Text = "TP TO REGEN"
+            end
+        end
+    end)
+end
+
+-- Instantly attempts to spawn the dual buttons upon entry
+buildTeleportUI()
+
+-- Rebuild interface safely if character initializes late/spawns after death
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(0.3)
+    buildTeleportUI()
+end)
