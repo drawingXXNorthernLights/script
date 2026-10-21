@@ -661,31 +661,26 @@ local function buildTeleportUI()
             local originalCFrame = rootPart.CFrame
             RegenButton.Text = "REGENERATING..." RegenGradient.Enabled = false RegenButton.BackgroundColor3 = Color3.fromRGB(30, 35, 45) RegenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
             
-            -- Teleport slightly higher so your character clears the button brick smoothly
             rootPart.CFrame = regenPart.CFrame * CFrame.new(0, 3.5, 0)
-            task.wait(0.1) -- Increased delay slightly to allow Delta physics to catch up
+            task.wait(0.1)
             
-            -- ADVANCED CLICK SCANNER LAYER
             local detector = nil
             
-            -- Check inside the part itself
             if regenPart:FindFirstChildOfClass("ClickDetector") then
                 detector = regenPart:FindFirstChildOfClass("ClickDetector")
-            -- Check inside the parent model container
             elseif regenPart.Parent and regenPart.Parent:FindFirstChildOfClass("ClickDetector") then
                 detector = regenPart.Parent:FindFirstChildOfClass("ClickDetector")
-            -- Check inside Kohl's official folder setup path directly
-            elseif workspace:FindFirstChild("Admin") and workspace.Admin:FindFirstChild("Regen") then
-                detector = workspace.Admin.Regen:FindFirstChildOfClass("ClickDetector")
+            else
+                local adminFolder = workspace:FindFirstChild("Admin")
+                local regenModel = adminFolder and adminFolder:FindFirstChild("Regen")
+                if regenModel then
+                    detector = regenModel:FindFirstChildOfClass("ClickDetector")
+                end
             end
             
-            -- Execute the simulated mouse click
             if fireclickdetector and detector then
                 fireclickdetector(detector, 0)
-                task.wait(0.05) -- Extra buffer to ensure the server processes the button click
-            elseif not fireclickdetector then
-                -- Fallback if the exploit engine is missing the click function entirely
-                print("Delta Error: fireclickdetector function is missing or restricted!")
+                task.wait(0.05)
             end
             
             task.wait(0.1)
@@ -696,7 +691,6 @@ local function buildTeleportUI()
         end
     end
 end)
-
 
 -- Instantly attempts to spawn the dual buttons upon entry
 buildTeleportUI()
