@@ -654,55 +654,45 @@ local function buildTeleportUI()
     end)
 
     -- Regen Button Click Event
-    RegenButton.MouseButton1Click:Connect(function()
-        local char = LocalPlayer.Character
-        local rootPart = char and char:FindFirstChild("HumanoidRootPart")
-        
-        if rootPart then
-            local regenPart = locateRegenButton()
-            if regenPart then
-                 -- 1. SAVE YOUR STARTING POSITION
-                local originalCFrame = rootPart.CFrame 
-                
-                RegenButton.Text = "REGENERATING..." 
-                RegenGradient.Enabled = false 
-                RegenButton.BackgroundColor3 = Color3.fromRGB(30, 35, 45) 
-                RegenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-                
-                -- 2. TELEPORT DIRECTLY IN FRONT OF THE REGEN BUTTON
-                rootPart.CFrame = regenPart.CFrame * CFrame.new(0, 2.5, 0)
-                task.wait(0.05) -- Tiny delay to ensure the game server registers your location
-                
-                -- 3. AUTOMATICALLY ACTIVATE THE MOUSE CLICK DETECTOR
-                local detector = regenPart:FindFirstChildOfClass("ClickDetector") or (regenPart.Parent and regenPart.Parent:FindFirstChildOfClass("ClickDetector"))
-                
-                if fireclickdetector and detector then
-                    -- Simulates a perfect mouse click directly on the game button instance
-                    fireclickdetector(detector, 0)
-                elseif fireclickdetector and not detector then
-                    -- Emergency fallback: Check if the main object itself is tracking the click detector handle
-                    local fallbackDetector = workspace:FindFirstChild("Admin") and workspace.Admin:FindFirstChild("Regen") and workspace.Admin.Regen:FindFirstChildOfClass("ClickDetector")
-                    if fallbackDetector then
-                        fireclickdetector(fallbackDetector, 0)
-                    end
-                end
-                
-                task.wait(0.1) -- Small breathing room for the server to accept the reset signal
-                
-                -- 4. INSTANTLY SNAP RIGHT BACK TO WHERE YOU WERE STANDING
-                rootPart.CFrame = originalCFrame 
-                
-                RegenButton.Text = "TP TO REGEN" 
-                RegenButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255) 
-                RegenButton.TextColor3 = Color3.fromRGB(0, 0, 0) 
-                RegenGradient.Enabled = true
-            else
-                RegenButton.Text = "REGEN NOT FOUND" 
-                task.wait(1.5) 
-                RegenButton.Text = "TP TO REGEN"
+    -- Regen Button Click Event (Automated ClickDetector touch + Instant Position Snap-back)
+RegenButton.MouseButton1Click:Connect(function()
+    local char = LocalPlayer.Character 
+    local rootPart = char and char:FindFirstChild("HumanoidRootPart")
+    
+    if rootPart then
+        local regenPart = locateRegenButton()
+        if regenPart then
+            local originalCFrame = rootPart.CFrame
+            RegenButton.Text = "REGENERATING..." 
+            RegenGradient.Enabled = false 
+            RegenButton.BackgroundColor3 = Color3.fromRGB(30, 35, 45) 
+            RegenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            
+            rootPart.CFrame = regenPart.CFrame * CFrame.new(0, 2.5, 0)
+            task.wait(0.05)
+            
+            local detector = regenPart:FindFirstChildOfClass("ClickDetector") or (regenPart.Parent and regenPart.Parent:FindFirstChildOfClass("ClickDetector"))
+            if fireclickdetector and detector then
+                fireclickdetector(detector, 0)
+            elseif fireclickdetector then
+                local fallbackDetector = workspace:FindFirstChild("Admin") and workspace.Admin:FindFirstChild("Regen") and workspace.Admin.Regen:FindFirstChildOfClass("ClickDetector")
+                if fallbackDetector then fireclickdetector(fallbackDetector, 0) end
             end
+            task.wait(0.1)
+            
+            rootPart.CFrame = originalCFrame
+            RegenButton.Text = "TP TO REGEN" 
+            RegenButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255) 
+            RegenButton.TextColor3 = Color3.fromRGB(0, 0, 0) 
+            RegenGradient.Enabled = true
+        else
+            RegenButton.Text = "REGEN NOT FOUND" 
+            task.wait(1.5) 
+            RegenButton.Text = "TP TO REGEN"
         end
-    end)
+    end
+end)
+
 
 -- Instantly attempts to spawn the dual buttons upon entry
 buildTeleportUI()
