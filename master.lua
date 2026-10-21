@@ -577,7 +577,7 @@ local function buildTeleportUI()
     local TeleportPadButton = Instance.new("TextButton")
     TeleportPadButton.Name = "TeleportPadButton"
     TeleportPadButton.Size = UDim2.new(0, 150, 0, 30)
-    TeleportPadButton.Position = UDim2.new(0.5, -100, 0.75, -40) -- Placed slightly higher up
+    TeleportPadButton.Position = UDim2.new(0.5, -100, 0.75, -80) -- Placed slightly higher up
     TeleportPadButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     TeleportPadButton.Text = "TP TO PAD"
     TeleportPadButton.TextColor3 = Color3.fromRGB(0, 0, 0)
