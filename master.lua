@@ -453,7 +453,7 @@ local function buildTeleportUI()
         local rootPart = char and char:FindFirstChild("HumanoidRootPart")
         
         if rootPart then
-            local pad = locateAdminPad()
+            local pad = locateTarget("Pad")
             if pad then
                 TeleportPadButton.Text = "TELEPORTING..."
                 TPGradient.Enabled = false
@@ -626,7 +626,7 @@ local function buildTeleportUI()
         local rootPart = char and char:FindFirstChild("HumanoidRootPart")
         
         if rootPart then
-            local regenPart = locateRegenButton()
+            local regenPart = locateTarget("Regen")
             if regenPart then
                 -- 1. SAVE YOUR STARTING POSITION
                 local originalCFrame = rootPart.CFrame 
