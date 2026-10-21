@@ -557,10 +557,21 @@ end
 -- ==========================================
 -- 2. UI BUILDER FUNCTION
 -- ==========================================
-local function buildThePanel()
-    -- Clean wipe old GUIs to prevent overlap bugs
-    local oldGui = PlayerGui:FindFirstChild("LegacyMassiveDestroyerGui")
-    if oldGui then oldGui:Destroy() end
+local function buildTeleportUI()
+    -- Create or re-establish the ScreenGui container
+    local ScreenGui = PlayerGui:FindFirstChild("AdminTeleportGui")
+    if not ScreenGui then
+        ScreenGui = Instance.new("ScreenGui")
+        ScreenGui.Name = "AdminTeleportGui"
+        ScreenGui.ResetOnSpawn = false -- Keeps UI alive when you reset/die
+        ScreenGui.Parent = PlayerGui
+    else
+        -- Clean wipe old buttons to prevent script layering bugs
+        local oldPad = ScreenGui:FindFirstChild("TeleportPadButton")
+        local oldRegen = ScreenGui:FindFirstChild("RegenButton")
+        if oldPad then oldPad:Destroy() end
+        if oldRegen then oldRegen:Destroy() end
+    end
 
     ------------------------------------------
     -- BUTTON 1: TELEPORT TO ADMIN PAD
